@@ -213,7 +213,41 @@ theorem exists_item_greater_than_stock (sc : ShoppingCart) (s : Stock) :
 -- stock (e.g., if the stock has 2 jeans left, you can't check out 3).
 theorem cart_less_than_stock (sc : ShoppingCart) (s : Stock) :
   (∃ i : Item, getItem sc i > getItem s i) -> checkout sc payment s = false :=
-  by sorry
+  by
+  intros h
+  have one_item_greater_than_stock :
+    (getItem sc Item.Cotton_Shirt > getItem s Item.Cotton_Shirt) ∨
+    (getItem sc Item.Polyester_Shirt > getItem s Item.Polyester_Shirt) ∨
+    (getItem sc Item.Jeans > getItem s Item.Jeans) ∨
+    (getItem sc Item.Sweatpants > getItem s Item.Sweatpants) ∨
+    (getItem sc Item.Tennis_Shoes > getItem s Item.Tennis_Shoes) ∨
+    (getItem sc Item.Running_Shoes > getItem s Item.Running_Shoes) ∨
+    (getItem sc Item.Hat > getItem s Item.Hat) :=
+    by exact exists_item_greater_than_stock sc s h
+  rw [checkout]
+  simp_all
+  intros
+  cases one_item_greater_than_stock with
+  | inr rhs => cases rhs with
+    | inr rhs => cases rhs with
+      | inr rhs => cases rhs with
+        | inr rhs => cases rhs with
+          | inr rhs => cases rhs with
+            | inr hat => rewrite [Nat.lt_iff_le_and_not_ge] at hat; simp_all
+            | inl running_shoes =>
+              rewrite [Nat.lt_iff_le_and_not_ge] at running_shoes
+              simp_all
+          | inl tennis_shoes =>
+            rewrite [Nat.lt_iff_le_and_not_ge] at tennis_shoes;
+            simp_all
+        | inl sweatpants => rewrite [Nat.lt_iff_le_and_not_ge] at sweatpants
+                            simp_all
+      | inl jeans => rewrite [Nat.lt_iff_le_and_not_ge] at jeans; simp_all
+    | inl polyester_shirt =>
+      rewrite [Nat.lt_iff_le_and_not_ge] at polyester_shirt
+      simp_all
+  | inl cotton_shirt => rewrite [Nat.lt_iff_le_and_not_ge] at cotton_shirt
+                        simp_all
 
 -- you cant add an item to the cart ( or change the number of items) that doesnt correspond to the stock.
 theorem no_add_or_change_if_stock_zero (sc : ShoppingCart) (s : Stock) (i: Item)  (q : Nat) :
