@@ -209,7 +209,8 @@ theorem exists_item_greater_than_stock (sc : ShoppingCart) (s : Stock) :
       | Running_Shoes => simp_all
       | Hat => simp_all
 
---You cannot check out a cart which contains more items than those available in stock (if stock has 2 jeans left, you cant check out 3).
+-- You cannot check out a cart which contains more items than those available in
+-- stock (e.g., if the stock has 2 jeans left, you can't check out 3).
 theorem cart_less_than_stock (sc : ShoppingCart) (s : Stock) :
   (¬ ∃ i : Item, getItem sc i > getItem s i) :=
   by sorry
