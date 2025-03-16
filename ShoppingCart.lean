@@ -212,7 +212,7 @@ theorem exists_item_greater_than_stock (sc : ShoppingCart) (s : Stock) :
 -- You cannot check out a cart which contains more items than those available in
 -- stock (e.g., if the stock has 2 jeans left, you can't check out 3).
 theorem cart_less_than_stock (sc : ShoppingCart) (s : Stock) :
-  (¬ ∃ i : Item, getItem sc i > getItem s i) :=
+  (∃ i : Item, getItem sc i > getItem s i) -> checkout sc payment s = false :=
   by sorry
 
 -- you cant add an item to the cart ( or change the number of items) that doesnt correspond to the stock.
