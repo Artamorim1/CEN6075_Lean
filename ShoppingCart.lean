@@ -107,11 +107,11 @@ inductive Command
   | Checkout (payment : Nat)
 
 
-/-- | Add_Item  -- 2 rules 1:Returns a new state that is the same as the old state but with the added item 2: returns same state if fails 
+/-- | Add_Item  -- 2 rules 1:Returns a new state that is the same as the old state but with the added item 2: returns same state if fails
  | Delete_Item -- Returns a new state that is the same as the old state but without the removed item 2: fails
- | Change_Quantity -- 1: Returns a new state that is the same as the old state but with the modified quantities item 2: returns same state if fails 
+ | Change_Quantity -- 1: Returns a new state that is the same as the old state but with the modified quantities item 2: returns same state if fails
  | Query_Cost -- Returns the same state
- | Checkout -- 1: Returns the same state if checkout returns false 2: returns empty cart if checkout returns true.   
+ | Checkout -- 1: Returns the same state if checkout returns false 2: returns empty cart if checkout returns true.
  -/
 
 def operationalSemantics : Command → (ShoppingCart × Stock) → ShoppingCart
@@ -197,7 +197,7 @@ theorem no_add_or_change_if_stock_zero (sc : ShoppingCart) (s : Stock) (i: Item)
    operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc) :=
    by sorry
 
--- if my checkout function (an implementation in lean) evaluates to true then the operational semantics for the Checkout command (specification) 
+-- if my checkout function (an implementation in lean) evaluates to true then the operational semantics for the Checkout command (specification)
 -- evaluates to (0,0,0,0,0,0,0) given the same cart and stock.
 theorem checkout_correctness (sc : ShoppingCart) (s : Stock) (payment : Nat) :
   checkout sc payment s = true →
