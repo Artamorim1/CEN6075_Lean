@@ -184,6 +184,30 @@ def testStockFormatted := formatCartOrStock testStock2
 #eval testCartFormatted  -- Expected output: ["Cotton Shirt x 2", "Jeans x 1", "Tennis Shoes x 3", "Hat x 1"]
 #eval testStockFormatted -- Expected output: ["Cotton Shirt x 10", "Polyester Shirt x 5", "Jeans x 3", "Sweatpants x 2", "Tennis Shoes x 8", "Running Shoes x 6", "Hat x 4"]
 
+-- If there exists an item in a shopping cart whose quantity is greater than
+-- that of the item in a store stock, then the item must be one of the Item
+-- constructors.
+theorem exists_item_greater_than_stock (sc : ShoppingCart) (s : Stock) :
+  (∃ i : Item, getItem sc i > getItem s i) →
+    (getItem sc Item.Cotton_Shirt > getItem s Item.Cotton_Shirt) ∨
+    (getItem sc Item.Polyester_Shirt > getItem s Item.Polyester_Shirt) ∨
+    (getItem sc Item.Jeans > getItem s Item.Jeans) ∨
+    (getItem sc Item.Sweatpants > getItem s Item.Sweatpants) ∨
+    (getItem sc Item.Tennis_Shoes > getItem s Item.Tennis_Shoes) ∨
+    (getItem sc Item.Running_Shoes > getItem s Item.Running_Shoes) ∨
+    (getItem sc Item.Hat > getItem s Item.Hat) :=
+    by
+    intros h
+    simp_all
+    cases h with
+    | intro i hi => cases i with
+      | Cotton_Shirt => simp_all
+      | Polyester_Shirt => simp_all
+      | Jeans => simp_all
+      | Sweatpants => simp_all
+      | Tennis_Shoes => simp_all
+      | Running_Shoes => simp_all
+      | Hat => simp_all
 
 --You cannot check out a cart which contains more items than those available in stock (if stock has 2 jeans left, you cant check out 3).
 theorem cart_less_than_stock (sc : ShoppingCart) (s : Stock) :
