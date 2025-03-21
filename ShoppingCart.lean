@@ -192,6 +192,12 @@ theorem cart_less_than_stock (sc : ShoppingCart) (s : Stock) :
 
 -- You can't add an item to the cart, or set its quantity to a nonzero value, if
 -- that item is not in stock.
+theorem no_add_or_change_if_stock_zero
+  (sc : ShoppingCart) (s : Stock) (i: Item) (q : Nat) :
+  (getItem s i = 0 ∧
+  -- We need this clause because otherwise q could itself be zero, and changing
+  -- the item's quantity would then be allowed.
+  q > 0) →
   (operationalSemantics (Command.AddItem i) (sc, s) = sc ∧
    operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc) :=
    by sorry
