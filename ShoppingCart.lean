@@ -190,9 +190,8 @@ theorem cart_less_than_stock (sc : ShoppingCart) (s : Stock) :
   (¬ ∃ i : Item, getItem sc i > getItem s i) :=
   by sorry
 
--- you cant add an item to the cart ( or change the number of items) that doesnt correspond to the stock.
-theorem no_add_or_change_if_stock_zero (sc : ShoppingCart) (s : Stock) (i: Item)  (q : Nat) :
-  getItem s i = 0 →
+-- You can't add an item to the cart, or set its quantity to a nonzero value, if
+-- that item is not in stock.
   (operationalSemantics (Command.AddItem i) (sc, s) = sc ∧
    operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc) :=
    by sorry
