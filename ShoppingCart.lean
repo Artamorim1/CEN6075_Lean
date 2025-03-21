@@ -200,7 +200,24 @@ theorem no_add_or_change_if_stock_zero
   q > 0) →
   (operationalSemantics (Command.AddItem i) (sc, s) = sc ∧
    operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc) :=
-   by sorry
+  by
+  intros H0
+  have H1 := H0.left
+  have H2 := H0.right
+  have left : operationalSemantics (Command.AddItem i) (sc, s) = sc :=
+    by
+    rw [operationalSemantics]
+    simp
+    rw [H1]
+    simp
+  have right : operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc :=
+    by
+    rw [operationalSemantics]
+    simp
+    rw [H1]
+    intro contra
+    simp_all
+  simp_all
 
 -- if my checkout function (an implementation in lean) evaluates to true then the operational semantics for the Checkout command (specification) 
 -- evaluates to (0,0,0,0,0,0,0) given the same cart and stock.
