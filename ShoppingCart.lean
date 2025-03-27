@@ -226,7 +226,7 @@ partial def shoppingLoop (sc : ShoppingCart) (s : Stock) : IO Unit := do
       | "Running Shoes" => addItem sc s Item.Running_Shoes
       | "Hat" => addItem sc s Item.Hat
       | _ => sc -- Leave the cart unchanged
-    if sc == newCart then  IO.println (trimmedItem ++ "is not sold at this store. Can't add it to cart") else IO.println (trimmedItem ++ " added to cart")
+    if sc == newCart then  IO.println (trimmedItem ++ "is not sold at this store. Can't add it to cart") else IO.println (trimmedItem ++ " added to cart.")
     shoppingLoop newCart s
 
   | "delete" => do
@@ -243,7 +243,7 @@ partial def shoppingLoop (sc : ShoppingCart) (s : Stock) : IO Unit := do
       | "Running Shoes" => deleteItem sc Item.Running_Shoes
       | "Hat" => deleteItem sc Item.Hat
       | _ => sc -- Leave the cart unchanged
-    if sc == newCart then IO.println "There is no such item in your cart" else IO.println (trimmedItem ++ " removed to cart")
+    if sc == newCart then IO.println "There is no such item in your cart" else IO.println (trimmedItem ++ " removed from cart.")
     shoppingLoop newCart s
 
   | "change" => do
@@ -265,7 +265,7 @@ partial def shoppingLoop (sc : ShoppingCart) (s : Stock) : IO Unit := do
           | "Running Shoes" => changeQuantity sc s Item.Running_Shoes n
           | "Hat" => changeQuantity sc s Item.Hat n
           | _ => sc -- Leave the cart unchanged
-        if sc == newCart then IO.println ("The store does not have " ++ trimmedNumber ++" "++ trimmedItem ++"in stock. Please select lets items") else IO.println (trimmedItem ++ " quantity changed")
+        if sc == newCart then IO.println ("The store does not have " ++ trimmedNumber ++" "++ trimmedItem ++"in stock. Please select less items") else IO.println (trimmedItem ++ " quantity changed.")
         shoppingLoop newCart s
      | none => IO.println "That is not a valid quantity"
         shoppingLoop sc s
@@ -279,13 +279,14 @@ partial def shoppingLoop (sc : ShoppingCart) (s : Stock) : IO Unit := do
     let trimmedPayment := String.trim payment
     match trimmedPayment.toNat? with
       | some n => if checkout sc n s then
-                    IO.println "Checkout completed sucessfully! Wait a moment until we restock our inventory"
+                    IO.println "Checkout completed successfully!"
+                    IO.println "Wait a moment until we restock our inventory."
                   else
-                    IO.println "Your payment ammount does not match the total cost."
+                    IO.println "Your payment amount does not match the total cost."
                   let newCart := if  checkout sc n s then (0,0,0,0,0,0,0) else sc
                   shoppingLoop newCart s
       | none => let newCart := sc
-                IO.println "Please input a valid Dollar ammount."
+                IO.println "Please input a valid dollar amount."
                 shoppingLoop newCart s
   | "exit" => IO.println "Goodbye!"
   | _ => do IO.println "Invalid command."; shoppingLoop sc s
