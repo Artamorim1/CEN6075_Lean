@@ -107,11 +107,11 @@ inductive Command
   | Checkout (payment : Nat)
 
 
-/-- | Add_Item  -- 2 rules 1:Returns a new state that is the same as the old state but with the added item 2: returns same state if fails 
+/-- | Add_Item  -- 2 rules 1:Returns a new state that is the same as the old state but with the added item 2: returns same state if fails
  | Delete_Item -- Returns a new state that is the same as the old state but without the removed item 2: fails
- | Change_Quantity -- 1: Returns a new state that is the same as the old state but with the modified quantities item 2: returns same state if fails 
+ | Change_Quantity -- 1: Returns a new state that is the same as the old state but with the modified quantities item 2: returns same state if fails
  | Query_Cost -- Returns the same state
- | Checkout -- 1: Returns the same state if checkout returns false 2: returns empty cart if checkout returns true.   
+ | Checkout -- 1: Returns the same state if checkout returns false 2: returns empty cart if checkout returns true.
  -/
 
 def operationalSemantics : Command → (ShoppingCart × Stock) → ShoppingCart
@@ -184,11 +184,70 @@ def testStockFormatted := formatCartOrStock testStock2
 #eval testCartFormatted  -- Expected output: ["Cotton Shirt x 2", "Jeans x 1", "Tennis Shoes x 3", "Hat x 1"]
 #eval testStockFormatted -- Expected output: ["Cotton Shirt x 10", "Polyester Shirt x 5", "Jeans x 3", "Sweatpants x 2", "Tennis Shoes x 8", "Running Shoes x 6", "Hat x 4"]
 
+-- If there exists an item in a shopping cart whose quantity is greater than
+-- that of the item in a store stock, then the item must be one of the Item
+-- constructors.
+theorem exists_item_greater_than_stock (sc : ShoppingCart) (s : Stock) :
+  (∃ i : Item, getItem sc i > getItem s i) →
+    (getItem sc Item.Cotton_Shirt > getItem s Item.Cotton_Shirt) ∨
+    (getItem sc Item.Polyester_Shirt > getItem s Item.Polyester_Shirt) ∨
+    (getItem sc Item.Jeans > getItem s Item.Jeans) ∨
+    (getItem sc Item.Sweatpants > getItem s Item.Sweatpants) ∨
+    (getItem sc Item.Tennis_Shoes > getItem s Item.Tennis_Shoes) ∨
+    (getItem sc Item.Running_Shoes > getItem s Item.Running_Shoes) ∨
+    (getItem sc Item.Hat > getItem s Item.Hat) :=
+    by
+    intros h
+    simp_all
+    cases h with
+    | intro i hi => cases i with
+      | Cotton_Shirt => simp_all
+      | Polyester_Shirt => simp_all
+      | Jeans => simp_all
+      | Sweatpants => simp_all
+      | Tennis_Shoes => simp_all
+      | Running_Shoes => simp_all
+      | Hat => simp_all
 
---You cannot check out a cart which contains more items than those available in stock (if stock has 2 jeans left, you cant check out 3).
+-- You cannot check out a cart which contains more items than those available in
+-- stock (e.g., if the stock has 2 jeans left, you can't check out 3).
 theorem cart_less_than_stock (sc : ShoppingCart) (s : Stock) :
-  (¬ ∃ i : Item, getItem sc i > getItem s i) :=
-  by sorry
+  (∃ i : Item, getItem sc i > getItem s i) -> checkout sc payment s = false :=
+  by
+  intros h
+  have one_item_greater_than_stock :
+    (getItem sc Item.Cotton_Shirt > getItem s Item.Cotton_Shirt) ∨
+    (getItem sc Item.Polyester_Shirt > getItem s Item.Polyester_Shirt) ∨
+    (getItem sc Item.Jeans > getItem s Item.Jeans) ∨
+    (getItem sc Item.Sweatpants > getItem s Item.Sweatpants) ∨
+    (getItem sc Item.Tennis_Shoes > getItem s Item.Tennis_Shoes) ∨
+    (getItem sc Item.Running_Shoes > getItem s Item.Running_Shoes) ∨
+    (getItem sc Item.Hat > getItem s Item.Hat) :=
+    by exact exists_item_greater_than_stock sc s h
+  rw [checkout]
+  simp_all
+  intros
+  cases one_item_greater_than_stock with
+  | inr rhs => cases rhs with
+    | inr rhs => cases rhs with
+      | inr rhs => cases rhs with
+        | inr rhs => cases rhs with
+          | inr rhs => cases rhs with
+            | inr hat => rewrite [Nat.lt_iff_le_and_not_ge] at hat; simp_all
+            | inl running_shoes =>
+              rewrite [Nat.lt_iff_le_and_not_ge] at running_shoes
+              simp_all
+          | inl tennis_shoes =>
+            rewrite [Nat.lt_iff_le_and_not_ge] at tennis_shoes;
+            simp_all
+        | inl sweatpants => rewrite [Nat.lt_iff_le_and_not_ge] at sweatpants
+                            simp_all
+      | inl jeans => rewrite [Nat.lt_iff_le_and_not_ge] at jeans; simp_all
+    | inl polyester_shirt =>
+      rewrite [Nat.lt_iff_le_and_not_ge] at polyester_shirt
+      simp_all
+  | inl cotton_shirt => rewrite [Nat.lt_iff_le_and_not_ge] at cotton_shirt
+                        simp_all
 
 -- you cant add an item to the cart ( or change the number of items) that doesnt correspond to the stock.
 theorem no_add_or_change_if_stock_zero (sc : ShoppingCart) (s : Stock) (i: Item)  (q : Nat) :
@@ -197,7 +256,7 @@ theorem no_add_or_change_if_stock_zero (sc : ShoppingCart) (s : Stock) (i: Item)
    operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc) :=
    by sorry
 
--- if my checkout function (an implementation in lean) evaluates to true then the operational semantics for the Checkout command (specification) 
+-- if my checkout function (an implementation in lean) evaluates to true then the operational semantics for the Checkout command (specification)
 -- evaluates to (0,0,0,0,0,0,0) given the same cart and stock.
 theorem checkout_correctness (sc : ShoppingCart) (s : Stock) (payment : Nat) :
   checkout sc payment s = true →
