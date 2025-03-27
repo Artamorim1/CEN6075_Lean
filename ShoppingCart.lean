@@ -175,11 +175,11 @@ def formatCartOrStock (t : ShoppingCart) : List String :=
     (Item.Hat, getItem t Item.Hat)
   ]
   items.foldl (fun acc (item, qty) =>
-    if qty > 0 then acc ++ [toString item ++ " x " ++ toString qty] else acc) []
+    if qty > 0 then acc ++ ["  " ++ toString item ++ " x " ++ toString qty] else acc) []
 
 def displayCart (sc : ShoppingCart) : String :=
   match formatCartOrStock sc with
-  | [] => "Your cart is empty."
+  | [] => "  Your cart is empty."
   | lst => String.intercalate "\n" lst
 
 def displayStock (s : Stock) : String :=
@@ -189,9 +189,9 @@ def displayStock (s : Stock) : String :=
 
 -- I needed to define is as partial because it may not terminate
 partial def shoppingLoop (sc : ShoppingCart) (s : Stock) : IO Unit := do
-  IO.println "\nCurrent Cart:\n"
+  IO.println "\nCurrent Cart:"
   IO.println (displayCart sc)
-  IO.println "\nCurrent Stock:\n"
+  IO.println "\nCurrent Stock:"
   IO.println (displayStock s)
   IO.println "\nChoose an action: add, delete, change, cost, checkout, or exit"
 
