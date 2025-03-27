@@ -1,4 +1,6 @@
 import Init.System.IO
+import Init.Data.String.Basic
+import Init.Control.Basic
 
 inductive Item
 | Cotton_Shirt
@@ -33,6 +35,9 @@ def price : Item → Nat
 
 -- I defined the states as tuples, because it is what i am confortable with
 def ShoppingCart := (Nat × Nat × Nat × Nat × Nat × Nat × Nat)
+deriving BEq
+ -- I need this for the sc = newCart.
+
 def Stock := (Nat × Nat × Nat × Nat × Nat × Nat × Nat)
 
 -- These next two are auxiliary functions that associate each Nat in the states with an item
@@ -71,7 +76,7 @@ def getCost (sc : ShoppingCart) : Nat :=
   q6 * p6 +
   q7 * p7
 
-/--
+
 def addItem (sc : ShoppingCart) (s : Stock) (i : Item) : ShoppingCart :=
   let q := getItem sc i
   let stockQty := getItem s i
@@ -83,7 +88,7 @@ def deleteItem (sc : ShoppingCart) (i : Item) : ShoppingCart :=
 def changeQuantity (sc : ShoppingCart) (s : Stock) (i : Item) (q : Nat) : ShoppingCart :=
   let stockQty := getItem s i
   if q ≤ stockQty then setItem sc i q else sc
---/
+
 
 -- So this function can be used to specify check out the Command check out by using checkout(sc) = true or false as preconditions.
 -- I just chose not to to make the semantics stand on their own.
@@ -139,10 +144,11 @@ def operationalSemantics : Command → (ShoppingCart × Stock) → ShoppingCart
       if validStock && (totalCost == payment) then (0, 0, 0, 0, 0, 0, 0) else (q1, q2, q3, q4, q5, q6, q7)
 
 -- **Test cases**
-def testCart : ShoppingCart := (0, 0, 0, 0, 0, 0, 0)
+def EmptyCart : ShoppingCart := (0, 0, 0, 0, 0, 0, 0)
 def testStock : Stock := (10, 5, 3, 2, 8, 6, 4)
 
-def test1 := operationalSemantics (Command.AddItem Item.Cotton_Shirt) (testCart, testStock)
+/--
+def test1 := operationalSemantics (Command.AddItem Item.Cotton_Shirt) (EmptyCart, testStock)
 def test2 := operationalSemantics (Command.AddItem Item.Jeans) (test1, testStock)
 def test3 := operationalSemantics (Command.ChangeQuantity Item.Cotton_Shirt 3) (test2, testStock)
 def test4 := getCost test3
@@ -153,37 +159,129 @@ def test5 := operationalSemantics (Command.Checkout test4) (test3, testStock)
 #eval test3   -- Expected output: (3, 0, 1, 0, 0, 0, 0)
 #eval test4   -- Expected total cost as a Nat
 #eval test5   -- Expected output: (0, 0, 0, 0, 0, 0, 0) if checkout succeeds, otherwise same as test3
+--/
 
 
--- Pretty Printer
+-- This is the IO part i am trying to implement
+
 def formatCartOrStock (t : ShoppingCart) : List String :=
-  let q1 := getItem t Item.Cotton_Shirt
-  let q2 := getItem t Item.Polyester_Shirt
-  let q3 := getItem t Item.Jeans
-  let q4 := getItem t Item.Sweatpants
-  let q5 := getItem t Item.Tennis_Shoes
-  let q6 := getItem t Item.Running_Shoes
-  let q7 := getItem t Item.Hat
-  let result := []
-  let result := if q1 > 0 then result ++ ["Cotton Shirt x " ++ toString q1] else result
-  let result := if q2 > 0 then result ++ ["Polyester Shirt x " ++ toString q2] else result
-  let result := if q3 > 0 then result ++ ["Jeans x " ++ toString q3] else result
-  let result := if q4 > 0 then result ++ ["Sweatpants x " ++ toString q4] else result
-  let result := if q5 > 0 then result ++ ["Tennis Shoes x " ++ toString q5] else result
-  let result := if q6 > 0 then result ++ ["Running Shoes x " ++ toString q6] else result
-  let result := if q7 > 0 then result ++ ["Hat x " ++ toString q7] else result
-  result
+  let items := [
+    (Item.Cotton_Shirt, getItem t Item.Cotton_Shirt),
+    (Item.Polyester_Shirt, getItem t Item.Polyester_Shirt),
+    (Item.Jeans, getItem t Item.Jeans),
+    (Item.Sweatpants, getItem t Item.Sweatpants),
+    (Item.Tennis_Shoes, getItem t Item.Tennis_Shoes),
+    (Item.Running_Shoes, getItem t Item.Running_Shoes),
+    (Item.Hat, getItem t Item.Hat)
+  ]
+  items.foldl (fun acc (item, qty) =>
+    if qty > 0 then acc ++ [toString item ++ " x " ++ toString qty] else acc) []
 
--- **Test Cases**
-def testCart2 : ShoppingCart := (2, 0, 1, 0, 3, 0, 1)
-def testStock2 : Stock := (10, 5, 3, 2, 8, 6, 4)
+def displayCart (sc : ShoppingCart) : String :=
+  match formatCartOrStock sc with
+  | [] => "Your cart is empty."
+  | lst => String.intercalate "\n" lst
 
-def testCartFormatted := formatCartOrStock testCart2
-def testStockFormatted := formatCartOrStock testStock2
+def displayStock (s : Stock) : String :=
+  String.intercalate "\n" (formatCartOrStock s)
 
-#eval testCartFormatted  -- Expected output: ["Cotton Shirt x 2", "Jeans x 1", "Tennis Shoes x 3", "Hat x 1"]
-#eval testStockFormatted -- Expected output: ["Cotton Shirt x 10", "Polyester Shirt x 5", "Jeans x 3", "Sweatpants x 2", "Tennis Shoes x 8", "Running Shoes x 6", "Hat x 4"]
 
+
+-- I needed to define is as partial because it may not terminate
+partial def shoppingLoop (sc : ShoppingCart) (s : Stock) : IO Unit := do
+  IO.println "\nCurrent Cart:\n"
+  IO.println (displayCart sc)
+  IO.println "\nCurrent Stock:\n"
+  IO.println (displayStock s)
+  IO.println "\nChoose an action: add, delete, change, cost, checkout, or exit"
+
+  let stdin ← IO.getStdin
+
+  let input ← stdin.getLine
+  let trimmedInput := String.trim input
+
+  match trimmedInput with
+  | "add" => do
+    IO.println "Enter item name: "
+    let itemStr ← stdin.getLine
+    let trimmedItem := String.trim itemStr
+    let newCart :=
+    match trimmedItem with
+      | "Cotton Shirt" => addItem sc s Item.Cotton_Shirt
+      | "Polyester Shirt" => addItem sc s Item.Polyester_Shirt
+      | "Jeans" => addItem sc s Item.Jeans
+      | "Sweatpants" => addItem sc s Item.Sweatpants
+      | "Tennis Shoes" => addItem sc s Item.Tennis_Shoes
+      | "Running Shoes" => addItem sc s Item.Running_Shoes
+      | "Hat" => addItem sc s Item.Hat
+      | _ => sc -- Leave the cart unchanged
+    if sc == newCart then  IO.println (trimmedItem ++ "is not sold at this store. Can't add it to cart") else IO.println (trimmedItem ++ " added to cart")
+    shoppingLoop newCart s
+
+  | "delete" => do
+    IO.println "Enter item name: "
+    let itemStr ← stdin.getLine
+    let trimmedItem := String.trim itemStr
+    let newCart :=
+    match trimmedItem with
+      | "Cotton Shirt" => deleteItem sc Item.Cotton_Shirt
+      | "Polyester Shirt" => deleteItem sc Item.Polyester_Shirt
+      | "Jeans" => deleteItem sc Item.Jeans
+      | "Sweatpants" => deleteItem sc Item.Sweatpants
+      | "Tennis Shoes" => deleteItem sc Item.Tennis_Shoes
+      | "Running Shoes" => deleteItem sc Item.Running_Shoes
+      | "Hat" => deleteItem sc Item.Hat
+      | _ => sc -- Leave the cart unchanged
+    if sc == newCart then IO.println "There is no such item in your cart" else IO.println (trimmedItem ++ " removed to cart")
+    shoppingLoop newCart s
+
+  | "change" => do
+    IO.println "Enter item name: "
+    let itemStr ← stdin.getLine
+    let trimmedItem := String.trim itemStr
+    IO.println "New desired quantity: "
+    let numberStr ← stdin.getLine
+    let trimmedNumber := String.trim numberStr
+    match trimmedNumber.toNat? with
+     | some n =>
+        let newCart :=
+        match trimmedItem with
+          | "Cotton Shirt" => changeQuantity sc s Item.Cotton_Shirt n
+          | "Polyester Shirt" => changeQuantity sc s Item.Polyester_Shirt n
+          | "Jeans" => changeQuantity sc s Item.Jeans n
+          | "Sweatpants" => changeQuantity sc s Item.Sweatpants n
+          | "Tennis Shoes" => changeQuantity sc s Item.Tennis_Shoes n
+          | "Running Shoes" => changeQuantity sc s Item.Running_Shoes n
+          | "Hat" => changeQuantity sc s Item.Hat n
+          | _ => sc -- Leave the cart unchanged
+        if sc == newCart then IO.println ("The store does not have " ++ trimmedNumber ++" "++ trimmedItem ++"in stock. Please select lets items") else IO.println (trimmedItem ++ " quantity changed")
+        shoppingLoop newCart s
+     | none => IO.println "That is not a valid quantity"
+        shoppingLoop sc s
+  | "cost" => do
+    let currentCost := getCost sc
+    IO.println ("The total cost for your cart is: $" ++ toString currentCost)
+    shoppingLoop sc s
+  | "checkout" => do
+    IO.println ("Your total is $" ++ toString (getCost sc) ++". Please input your intended payment:")
+    let payment ← stdin.getLine
+    let trimmedPayment := String.trim payment
+    match trimmedPayment.toNat? with
+      | some n => if checkout sc n s then
+                    IO.println "Checkout completed sucessfully! Wait a moment until we restock our inventory"
+                  else
+                    IO.println "Your payment ammount does not match the total cost."
+                  let newCart := if  checkout sc n s then (0,0,0,0,0,0,0) else sc
+                  shoppingLoop newCart s
+      | none => let newCart := sc
+                IO.println "Please input a valid Dollar ammount."
+                shoppingLoop newCart s
+  | "exit" => IO.println "Goodbye!"
+  | _ => do IO.println "Invalid command."; shoppingLoop sc s
+
+-- Main function to start the shopping loop
+def main : IO Unit :=
+  shoppingLoop EmptyCart testStock
 -- If there exists an item in a shopping cart whose quantity is greater than
 -- that of the item in a store stock, then the item must be one of the Item
 -- constructors.
