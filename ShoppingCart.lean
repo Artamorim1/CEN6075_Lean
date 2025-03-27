@@ -193,7 +193,18 @@ partial def shoppingLoop (sc : ShoppingCart) (s : Stock) : IO Unit := do
   IO.println (displayCart sc)
   IO.println "\nCurrent Stock:"
   IO.println (displayStock s)
-  IO.println "\nChoose an action: add, delete, change, cost, checkout, or exit"
+  IO.println "\nEnter a command:\n"
+  IO.println "[add]:      This will prompt you to add an item to the cart.\n"
+  IO.println "[delete]:   This will prompt you to remove an item from the cart.\n"
+  IO.println "[change]:   This will prompt you to change the quantity of an"
+  IO.println "            item already in the cart.\n"
+  IO.println "[cost]:     This will print the total cost of all the items in"
+  IO.println "            the cart.\n"
+  IO.println "[checkout]: This will ask you how much money you would like"
+  IO.println "            to attempt to checkout with, and then attempt to"
+  IO.println "            checkout.\n"
+  IO.println "[exit]:     This will exit the shop.\n"
+  IO.print "> "
 
   let stdin ← IO.getStdin
 
