@@ -249,12 +249,34 @@ theorem cart_less_than_stock (sc : ShoppingCart) (s : Stock) :
   | inl cotton_shirt => rewrite [Nat.lt_iff_le_and_not_ge] at cotton_shirt
                         simp_all
 
--- you cant add an item to the cart ( or change the number of items) that doesnt correspond to the stock.
-theorem no_add_or_change_if_stock_zero (sc : ShoppingCart) (s : Stock) (i: Item)  (q : Nat) :
-  getItem s i = 0 →
+-- You can't add an item to the cart, or set its quantity to a nonzero value, if
+-- that item is not in stock.
+theorem no_add_or_change_if_stock_zero
+  (sc : ShoppingCart) (s : Stock) (i: Item) (q : Nat) :
+  (getItem s i = 0 ∧
+  -- We need this clause because otherwise q could itself be zero, and changing
+  -- the item's quantity would then be allowed.
+  q > 0) →
   (operationalSemantics (Command.AddItem i) (sc, s) = sc ∧
    operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc) :=
-   by sorry
+  by
+  intros H0
+  have H1 := H0.left
+  have H2 := H0.right
+  have left : operationalSemantics (Command.AddItem i) (sc, s) = sc :=
+    by
+    rw [operationalSemantics]
+    simp
+    rw [H1]
+    simp
+  have right : operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc :=
+    by
+    rw [operationalSemantics]
+    simp
+    rw [H1]
+    intro contra
+    simp_all
+  simp_all
 
 -- if my checkout function (an implementation in lean) evaluates to true then the operational semantics for the Checkout command (specification)
 -- evaluates to (0,0,0,0,0,0,0) given the same cart and stock.
