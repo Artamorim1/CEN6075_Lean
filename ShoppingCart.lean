@@ -373,9 +373,11 @@ theorem no_add_or_change_if_stock_zero
     (Command.ChangeQuantity i q)
     (sc, s) = sc
   := by
-  intros zero_lt_q
-  have i_not_in_stock := zero_lt_q.left
-  have zero_lt_q := zero_lt_q.right
+  intros i_not_in_stock_and_zero_lt_q
+  have i_not_in_stock :=
+    i_not_in_stock_and_zero_lt_q.left
+  have zero_lt_q :=
+    i_not_in_stock_and_zero_lt_q.right
   have cannot_add_item :
     operationalSemantics
       (Command.AddItem i)
