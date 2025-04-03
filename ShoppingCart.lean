@@ -362,31 +362,52 @@ theorem cart_less_than_stock (sc : ShoppingCart) (s : Stock) :
 -- You can't add an item to the cart, or set its quantity to a nonzero value, if
 -- that item is not in stock.
 theorem no_add_or_change_if_stock_zero
-  (sc : ShoppingCart) (s : Stock) (i: Item) (q : Nat) :
-  (getItem s i = 0 ∧
-  -- We need this clause because otherwise q could itself be zero, and changing
-  -- the item's quantity would then be allowed.
-  q > 0) →
-  (operationalSemantics (Command.AddItem i) (sc, s) = sc ∧
-   operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc) :=
-  by
-  intros H0
-  have H1 := H0.left
-  have H2 := H0.right
-  have left : operationalSemantics (Command.AddItem i) (sc, s) = sc :=
-    by
+  (sc : ShoppingCart) (s : Stock)
+  (i: Item)           (q : Nat) :
+  (getItem s i = 0 ∧ 0 < q) →
+  operationalSemantics
+    (Command.AddItem i)
+    (sc, s) = sc
+  ∧
+  operationalSemantics
+    (Command.ChangeQuantity i q)
+    (sc, s) = sc
+  := by
+  intros i_not_in_stock_and_zero_lt_q
+  have i_not_in_stock :=
+    i_not_in_stock_and_zero_lt_q.left
+  have zero_lt_q :=
+    i_not_in_stock_and_zero_lt_q.right
+  have cannot_add_item :
+    operationalSemantics
+      (Command.AddItem i)
+      (sc, s) = sc
+  := by
     rw [operationalSemantics]
-    simp
-    rw [H1]
-    simp
-  have right : operationalSemantics (Command.ChangeQuantity i q) (sc, s) = sc :=
-    by
+    rw [i_not_in_stock]
+    simp only [Nat.not_add_one_le_zero]
+    rw [if_false]
+  have cannot_change_quantity :
+    operationalSemantics
+      (Command.ChangeQuantity i q)
+      (sc, s) = sc
+  := by
     rw [operationalSemantics]
-    simp
-    rw [H1]
-    intro contra
-    simp_all
-  simp_all
+    rw [i_not_in_stock]
+    have zero_le_q_and_not_q_le_zero :
+      0 ≤ q ∧ ¬q ≤ 0
+      := by
+      rw [<- Nat.lt_iff_le_not_le]
+      exact zero_lt_q
+    have not_q_le_zero : ¬ q ≤ 0
+    := by
+      exact
+      zero_le_q_and_not_q_le_zero.right
+    simp only [not_q_le_zero]
+    rw [if_false]
+  exact And.intro
+        cannot_add_item
+        cannot_change_quantity
 
 -- if my checkout function (an implementation in lean) evaluates to true then the operational semantics for the Checkout command (specification)
 -- evaluates to (0,0,0,0,0,0,0) given the same cart and stock.
