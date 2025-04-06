@@ -294,6 +294,8 @@ partial def shoppingLoop (sc : ShoppingCart) (s : Stock) : IO Unit := do
 -- Main function to start the shopping loop
 def main : IO Unit :=
   shoppingLoop EmptyCart testStock
+
+
 -- If there exists an item in a shopping cart whose quantity is greater than
 -- that of the item in a store stock, then the item must be one of the Item
 -- constructors.
@@ -409,15 +411,35 @@ theorem no_add_or_change_if_stock_zero
         cannot_add_item
         cannot_change_quantity
 
--- if my checkout function (an implementation in lean) evaluates to true then the operational semantics for the Checkout command (specification)
--- evaluates to (0,0,0,0,0,0,0) given the same cart and stock.
-theorem checkout_correctness (sc : ShoppingCart) (s : Stock) (payment : Nat) :
-  checkout sc payment s = true →
-  operationalSemantics (Command.Checkout payment) (sc, s) = (0, 0, 0, 0, 0, 0, 0) :=
- by sorry
+-- if my checkout function (an implementation in lean) evaluates to true then
+-- the operational semantics for the Checkout command (specification) evaluates
+-- to (0,0,0,0,0,0,0) given the same cart and stock.
+theorem checkout_correctness
+  (cart : ShoppingCart) (stock : Stock) (payment : Nat) :
+    checkout cart payment stock = true →
+      operationalSemantics (Command.Checkout payment) (cart, stock)
+        = (0, 0, 0, 0, 0, 0, 0) := by
+    let (q1, q2, q3, q4, q5, q6, q7) := cart
+    let (s1, s2, s3, s4, s5, s6, s7) := stock
+    unfold checkout getItem getCost operationalSemantics
+    simp_all
 
-
--- if you have the items in stock and the customer has enough money to pay for everything then you should able to check out
-theorem successful_checkout (sc : ShoppingCart) (s : Stock) (payment : Nat) :
-  (∀ i, getItem sc i ≤ getItem s i) → (getCost sc = payment) → checkout sc payment s = true :=
-  by sorry
+-- if you have the items in stock and the customer has enough money to pay for
+-- everything then you should able to check out
+theorem successful_checkout
+  (cart : ShoppingCart) (stock : Stock) (payment : Nat) :
+    (∀ i, getItem cart i ≤ getItem stock i) →
+      getCost cart = payment →
+      checkout cart payment stock = true := by
+    intros every_item_is_in_stock payment_matches
+    have no_item_too_much :
+      (getItem cart Item.Cotton_Shirt ≤ getItem stock Item.Cotton_Shirt) ∧
+      (getItem cart Item.Polyester_Shirt ≤ getItem stock Item.Polyester_Shirt) ∧
+      (getItem cart Item.Jeans ≤ getItem stock Item.Jeans) ∧
+      (getItem cart Item.Sweatpants ≤ getItem stock Item.Sweatpants) ∧
+      (getItem cart Item.Tennis_Shoes ≤ getItem stock Item.Tennis_Shoes) ∧
+      (getItem cart Item.Running_Shoes ≤ getItem stock Item.Running_Shoes) ∧
+      (getItem cart Item.Hat ≤ getItem stock Item.Hat) :=
+      by simp_all
+    unfold checkout
+    simp_all
